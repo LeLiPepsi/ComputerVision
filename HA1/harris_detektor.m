@@ -7,10 +7,10 @@ Merkmale = [];
 %% Input parser
 P = inputParser;
 % default
-defaultSegment_length = 3;
-defaultK = 0.05;
-defaultTau  = 7;
-defaultMin_dist = 20;
+defaultSegment_length = 5;
+defaultK = 0.06;
+defaultTau  = 3;
+defaultMin_dist = 10;
 defaultTile_size = [200 300];
 defaultN = 50;
 % Liste der notwendigen Parameter
@@ -61,28 +61,13 @@ else
     Fyy = Fy .* Fy;
     Fxy = Fx .* Fy;
     % Fenster W zu berechnen
-    % Fenster ist Gaussian Filter
-    w = fspecial('gaussian',segment_length,4);
-    Fxx_w = 1/segment_length^2*filter2(w,Fxx);
-    Fyy_w = 1/segment_length^2*filter2(w,Fyy);
-    Fxy_w = 1/segment_length^2*filter2(w,Fxy);
-%     switch segment_length
-%         case 3
-%             w = [0.5 0.75 0.5;0.75 1 0.75;0.5 0.75 0.5];
-%         case 5
-%             w = [0.3 0.5 0.8 0.5 0.3;
-%                  0.5 0.5 0.8 0.5 0.5;
-%                  0.8 0.8 1   0.8 0.8;
-%                  0.5 0.5 0.8 0.5 0.5;
-%                  0.3 0.5 0.8 0.5 0.3];
-%     end
-%     w = 0.5*ones(segment_length);
-%     w(segment_length*0.5+0.5,:) = 0.25*ones(1,segment_length); 
-%     w(:,segment_length*0.5+0.5) = 0.25*ones(segment_length,1);
-%     %Konvolution 
-%     Fxx_w = 1/segment_length^2*conv2(Fxx,w,'same');
-%     Fxy_w = 1/segment_length^2*conv2(Fxy,w,'same');
-%     Fyy_w = 1/segment_length^2*conv2(Fyy,w,'same');
+    w = 0.5*ones(segment_length);
+    w(segment_length*0.5+0.5,:) = 0.25*ones(1,segment_length); 
+    w(:,segment_length*0.5+0.5) = 0.25*ones(segment_length,1);
+    % Konvolution 
+    Fxx_w = 1/segment_length^2*conv2(Fxx,w,'same');
+    Fxy_w = 1/segment_length^2*conv2(Fxy,w,'same');
+    Fyy_w = 1/segment_length^2*conv2(Fyy,w,'same');
     % Determinante und Spur
     D =  Fxx_w .* Fyy_w - Fxy_w.^2;
     Tr2 = (Fxx_w + Fyy_w).^2;
@@ -95,11 +80,10 @@ else
 %             end
 %         end
 %     end
-%%   in kleinere Kacheln unterteilen , maximale Anzahl von Merkmalen
+%%   in kleinere Kacheln unterteilen , N staerkste Merkmale jeder Kachel waehlen 
     p = ceil(rows / k_rows);
     q = ceil(columns / k_columns);
     strongest = [];
-    H_a = H;
     % Fuer jede Kachel, die N staerkeste Merkmale werden gespeichert
     for s = 1:p
        for r = 1:q
@@ -127,9 +111,9 @@ else
     end
 %% Abstand halten
     % Alle staerkste Merkmale sortieren 
-%     str_sort = sortrows(strongest',3,'descend');
-%     str_sort = str_sort'; % Dimension: 3*M [y;x;H]
-    str_sort = strongest;
+    str_sort = sortrows(strongest',3,'descend');
+    str_sort = str_sort'; 
+    % Dimension von str_sort : 3*M [y;x;H]
     min_str_sort = str_sort(3,end);
     H_b = zeros(rows,columns);    
     for q = 1:length(str_sort)
@@ -139,10 +123,8 @@ else
     l = min_dist * 2 + 1;
     H_c = ordfilt2(H_b,l^2, ones(l));
     H_d = (H_c == H_b) & (H_c >= min_str_sort); 
-    [x y] = find(H_d);
+    [y x] = find(H_d);
     
 end
-
-Merkmale = [y';x'];
-
+Merkmale = [x';y'];
 end

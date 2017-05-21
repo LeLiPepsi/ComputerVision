@@ -15,9 +15,5 @@ tempx = (conv2(temp,sx,'same'));
 tempy = (conv2(temp,sy,'same'));
 Fx = tempx(2:sz_x+1,2:sz_y+1);
 Fy = tempy(2:sz_x+1,2:sz_y+1);
-% Fx = 1/8*log(tempx(2:sz_x+1,2:sz_y+1));
-% Fy = 1/8*log(tempy(2:sz_x+1,2:sz_y+1));
-
-
 end
 
