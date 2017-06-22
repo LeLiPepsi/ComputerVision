@@ -1,0 +1,91 @@
+function [Korrespondenzen] = punkt_korrespondenzen(I1,I2,Mpt1,Mpt2,varargin)
+
+% In dieser Funktion sollen die extrahierten Merkmalspunkte aus einer
+% Stereo-Aufnahme mittels NCC verglichen werden um Korrespondenzpunktpaare
+% zu ermitteln.
+%% Inuputpauser
+P = inputParser;
+% Liste der optionalen Parameter
+% Laenge des quadratischen Fensters
+P.addOptional('window_length', 15, @(x)isnumeric(x) && mod(x,2))%@(x) x >= 3 && mod(x,2)
+% Minimaler Wert von NCC
+P.addOptional('min_corr', 0.6, @isnumeric);
+% Plot ein/aus
+P.addOptional('do_plot', false, @islogical);
+% Lese den Input
+P.parse(varargin{:});
+% Extrahiere die Variablen aus dem Input-Parser
+window_length   = P.Results.window_length;
+min_corr        = P.Results.min_corr;
+do_plot         = P.Results.do_plot;
+%% Vorbereitung
+Korrespondenzen = [];
+[r1 c1] = size(Mpt1);
+[r2 c2] = size(Mpt2);
+bild_segm_1 = zeros(window_length);% Bildsegment in Bild 1
+bild_segm_2 = zeros(window_length);% Bildsegment in Bild 2
+NCC_vec = zeros(c2,1);
+%% Fuer jeder p1 aus Mpt1, suche p2 aus Mpt2
+% Ergebnisse werden in Korrespondenzen gespeichert.
+for i = 1 : c1   
+    % Behandlung von Punkten am Rand des Bildes 1 
+    x1 = Mpt1(1,i);
+    y1 = Mpt1(2,i);
+    %-------%
+    if (x1-0.5*(window_length-1)<= 0)||(x1+0.5*(window_length-1)>3000)
+        continue;
+    elseif (y1-0.5*(window_length-1)<= 0)||(y1+0.5*(window_length-1)>2000)
+        continue;
+    end
+    %-------%
+    % Bildsegment 1
+    bild_segm_1 = I1(y1-0.5*(window_length-1):y1+0.5*(window_length-1),x1-0.5*(window_length-1):x1+0.5*(window_length-1));
+    % Normierung des Bildsegments in Bild 1
+    mean_1 = ones(window_length,1) * mean2(bild_segm_1) * ones(1,window_length);
+    sigma_1 = std2(bild_segm_1);
+    bild_segm_1_norm = (double(bild_segm_1) - mean_1) / sigma_1;
+    for j = 1 : c2
+        % Behandlung von Punkten am Rand des Bildes 2    
+        x2 = Mpt2(1,j);
+        y2 = Mpt2(2,j);
+        %-------%
+        if (x2-0.5*(window_length-1)<= 0)||(x2+0.5*(window_length-1)>3000)
+            continue;
+        elseif (y2-0.5*(window_length-1)<= 0)||(y2+0.5*(window_length-1)>2000)
+            continue;
+        end
+        %-------%
+        % Bildsegment 2
+        bild_segm_2 = I2(y2-0.5*(window_length-1):y2+0.5*(window_length-1),x2-0.5*(window_length-1):x2+0.5*(window_length-1));
+        % Normierung des Bildsegments in Bild 2 
+        mean_2 = ones(window_length,1) * mean2(bild_segm_2) * ones(1,window_length);
+        sigma_2 = std2(bild_segm_2);
+        bild_segm_2_norm = (double(bild_segm_2) - mean_2) / sigma_2;
+        % Berechnung der NCC der beiden Bildsegmente
+        As = reshape(bild_segm_1_norm,[],1);
+        Bs = reshape(bild_segm_2_norm,[],1);
+        tr = trace(As' * Bs);
+        NCC_vec(j) = 2 - 2 / (window_length^2 -1) * tr;
+    end
+    % Finden den p2, der NCC maximiert
+    [M, I] = max(NCC_vec(:));
+    % Vergleichen mit min_corr, gefundene Punktpaare wird gespeichert
+    if M > min_corr
+        Korrespondenzen = [Korrespondenzen;x1;y1;Mpt2(1,I);Mpt2(2,I)];
+    end
+end
+%% Visualisierung
+if do_plot 
+    length_Korr = length(Korrespondenzen);
+    if length_Korr
+        for i = 1 : length_Korr
+            matched_p1 = [];
+            matched_p2 = [];
+            %showMatchedFeatures(I1,I2,matchedPoints1,matchedPoints2,'montage','Parent',ax,'',{'','',[]});
+        end
+    end
+end
+
+end
+
+
