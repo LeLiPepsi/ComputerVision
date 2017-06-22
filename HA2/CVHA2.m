@@ -5,9 +5,9 @@
 %  Bestimmung von Punktkorrespondenzen zwischen Merkmalspunkten einer Stereo
 %  Aufnahme.
 
-%  Für die letztendliche Abgabe bitte die Kommentare in den folgenden Zeilen
-%  enfernen und sicherstellen, dass alle optionalen Parameter über den
-%  entsprechenden Funktionsaufruf fun('var',value) modifiziert werden können.
+%  Fï¿½r die letztendliche Abgabe bitte die Kommentare in den folgenden Zeilen
+%  enfernen und sicherstellen, dass alle optionalen Parameter ï¿½ber den
+%  entsprechenden Funktionsaufruf fun('var',value) modifiziert werden kï¿½nnen.
 
 
 %% Bilder laden
@@ -23,5 +23,5 @@ Merkmale2 = harris_detektor(IGray2,'segment_length',9,'k',0.05,'min_dist',50,'N'
 
 
 
-%% Korrespondenzschätzung 
-Korrespondenzen = punkt_korrespondenzen(IGray1,IGray2,Merkmale1,Merkmale2);
+%% Korrespondenzschï¿½tzung
+ Korrespondenzen = punkt_korrespondenzen(IGray1,IGray2,Merkmale1,Merkmale2,'min_corr',0.99,'do_plot',true);
